@@ -3,45 +3,30 @@ import express from 'express'
 import morgan from 'morgan'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
-import { createDbPool } from './infrastructure/DB'
-import { requireUser } from './features/auth/AuthMiddleware'
-import { authRoutes } from './features/auth/AuthRouter'
-import { initializeEnv } from './infrastructure/Env'
+import booksHandler from './features/books'
+import bookCategoryHandler from './features/category'
+import addBookHandler from './features/addBook'
+import deleteBookHandler from './features/deleteBook'
+import updateBookHandler from './features/updateBook'
+import bookHandler from './features/book'
 
 dotenv.config()
 
-// https://github.com/microsoft/TypeScript/issues/41831
-const prerequisites = [createDbPool(), Promise.resolve()] as const
+const app = express()
+const port = 8080
 
-Promise.all(prerequisites).then(([pool]) => {
-  const app = express()
-  const port = process.env.PORT || 8081
+app
+  .use(morgan('dev'))
+  .use(cors())
+  .use(express.json())
+  .use(cookieParser())
+  .get('/books', booksHandler)
+  .get('/category', bookCategoryHandler)
+  .post('/add_book', addBookHandler)
+  .delete('/delete_book', deleteBookHandler)
+  .put('/update_book', updateBookHandler)
+  .get('/book', bookHandler)
 
-  app
-    .use(morgan('dev'))
-    .use(
-      cors({
-        credentials: true,
-        origin: 'http://localhost:8080'
-      })
-    )
-    .use(express.json())
-    .use(cookieParser())
-    .get('/health', (_, res) => {
-      if (pool) {
-        res.status(200).json({ status: 'healthy' })
-      } else {
-        res.status(503).json({ status: 'unavailable' })
-      }
-    })
-    .use(initializeEnv(pool))
-    .get('/me', requireUser, authRoutes.me)
-    .post('/login', authRoutes.login)
-    .post('/logout', requireUser, authRoutes.logout)
-    .post('/register', authRoutes.register)
-    .post('/refresh-token', authRoutes.refreshToken)
-
-  app.listen(port, () => {
-    console.log(`App started successfully on ${port}!`)
-  })
+app.listen(port, () => {
+  console.log(`App started successfully on ${port}!`)
 })

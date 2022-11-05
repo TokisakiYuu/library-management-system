@@ -1,9 +1,0 @@
-{
-  "extends": [
-    "config:base",
-    ":pinAllExceptPeerDependencies"
-  ],
-  "ignorePaths": [],
-  "automerge": true,
-  "requiredStatusChecks": null
-}
